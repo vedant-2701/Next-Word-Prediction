@@ -172,6 +172,7 @@ model_info = {
 }
 with open('model_info.pkl', 'wb') as f:
     pickle.dump(model_info, f)
+print("Saved model_info.pkl successfully")
 
 print("Training complete! Model saved as 'attentive_lstm.h5'")
 print("Run: streamlit run app.py")
