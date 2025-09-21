@@ -1,0 +1,5 @@
+keras==3.10.0
+tensorflow==2.20.0  # Latest stable as of Sept 2025, supports Keras 3.x
+nltk==3.8.1
+streamlit==1.39.0
+scikit-learn
