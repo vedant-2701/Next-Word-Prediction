@@ -212,5 +212,8 @@ __marimo__/
 *.pkl
 glove.6B.*
 training_data/glove.6B.*
+training_data/glove.6B.txt
+training_data/1661-0.txt
+training_data/1661-0.txt.processed
 __pycache__/
 .DS_Store
