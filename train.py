@@ -26,8 +26,8 @@ from tensorflow.keras.utils import to_categorical
 from sklearn.metrics import classification_report  # For potential multi-class eval, but simplified here
 
 # Configuration
-DATA_FILE = '1661-0.txt'  # Download from https://www.gutenberg.org/files/1661/1661-0.txt
-GLOVE_FILE = 'glove.6B.100d.txt'  # Download from https://nlp.stanford.edu/data/glove.6B.zip (extract)
+DATA_FILE = 'training_data/1661-0.txt'  # Download from https://www.gutenberg.org/files/1661/1661-0.txt
+GLOVE_FILE = 'training_data/glove.6B.100d.txt'  # Download from https://nlp.stanford.edu/data/glove.6B.zip (extract)
 EMBEDDING_DIM = 100
 VOCAB_SIZE = 10000  # Max unique words
 SEQ_LENGTH = 50  # Sequence length for context
