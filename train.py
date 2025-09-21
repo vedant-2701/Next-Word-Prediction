@@ -26,35 +26,22 @@ from tensorflow.keras.utils import to_categorical
 from sklearn.metrics import classification_report  # For potential multi-class eval, but simplified here
 
 # Configuration
-DATA_FILE = 'Next-Word-Prediction/training_data/1661-0.txt'# Download from https://www.gutenberg.org/files/1661/1661-0.txt
-GLOVE_FILE = 'Next-Word-Prediction/training_data/glove.6B.100d.txt' # Download from https://nlp.stanford.edu/data/glove.6B.zip (extract)
+DATA_FILE = 'training_data/1661-0.txt'# Download from https://www.gutenberg.org/files/1661/1661-0.txt
+GLOVE_FILE = 'training_data/glove.6B.100d.txt' # Download from https://nlp.stanford.edu/data/glove.6B.zip (extract)
 EMBEDDING_DIM = 100
 VOCAB_SIZE = 10000  # Max unique words
 SEQ_LENGTH = 50  # Sequence length for context
 
-# # Download data if not present
-# if not os.path.exists(DATA_FILE):
-#     urlretrieve('https://www.gutenberg.org/files/1661/1661-0.txt', DATA_FILE)
-#     print(f"Downloaded {DATA_FILE}")
-
-# if not os.path.exists(GLOVE_FILE):
-#     # Note: User needs to download manually or automate unzip
-#     print(f"Please download {GLOVE_FILE} from https://nlp.stanford.edu/projects/glove/ and place in current directory.")
-
-# Create directories if they don't exist
-os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+# Download data if not present
 if not os.path.exists(DATA_FILE):
     urlretrieve('https://www.gutenberg.org/files/1661/1661-0.txt', DATA_FILE)
     print(f"Downloaded {DATA_FILE}")
 
-os.makedirs(os.path.dirname(GLOVE_FILE), exist_ok=True)
 if not os.path.exists(GLOVE_FILE):
-    glove_zip = 'Next-Word-Prediction/glove.6B.zip'
-    if not os.path.exists(glove_zip):
-        urlretrieve('https://nlp.stanford.edu/data/glove.6B.zip', glove_zip)
-    !unzip -o {glove_zip} -d Next-Word-Prediction/
-    !mv Next-Word-Prediction/glove.6B.100d.txt {GLOVE_FILE}
-    print(f"Downloaded and extracted {GLOVE_FILE}")
+    # Note: User needs to download manually or automate unzip
+    print(f"Please download {GLOVE_FILE} from https://nlp.stanford.edu/projects/glove/ and place in current directory.")
+
+
 def load_and_process_data(file_path, max_words):
     """Load text, tokenize, and create unique word index limited to max_words."""
     with open(file_path, 'r', encoding='utf-8') as f:
