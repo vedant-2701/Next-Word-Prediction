@@ -271,22 +271,22 @@ def load_multiple_sources(file_paths, max_words):
     return unique_word_index, all_tokens, sources_loaded
 
 def create_sequences_with_unk(tokens, unique_word_index, seq_length):
-    """Create sequences with unknown word handling."""
+    """Create sequences with unknown word handling and ensure all indices are valid."""
     sequences = []
     next_words = []
     unk_id = unique_word_index['<UNK>']
-    
-    print("Creating sequences with UNK token handling...")
-    
+    vocab_size = len(unique_word_index)
+    print("Creating sequences with UNK token handling and index validation...")
     for i in range(len(tokens) - seq_length):
         seq = tokens[i:i + seq_length]
-        # Map unknown words to <UNK> instead of skipping
-        seq_indices = [unique_word_index.get(word, unk_id) for word in seq]
-        next_word_idx = unique_word_index.get(tokens[i + seq_length], unk_id)
-        
-        sequences.append(seq_indices)
-        next_words.append(next_word_idx)
-    
+        seq_ids = [unique_word_index.get(word, unk_id) for word in seq]
+        next_word = tokens[i + seq_length]
+        next_id = unique_word_index.get(next_word, unk_id)
+        # Ensure all indices are within bounds
+        seq_ids = [idx if idx < vocab_size else unk_id for idx in seq_ids]
+        next_id = next_id if next_id < vocab_size else unk_id
+        sequences.append(seq_ids)
+        next_words.append(next_id)
     print(f"Created {len(sequences):,} training sequences")
     return np.array(sequences), np.array(next_words)
 
@@ -388,20 +388,13 @@ def build_improved_model(vocab_size, embedding_dim, seq_length, embedding_matrix
     return model
 
 def calculate_perplexity(model, X, y):
-    """Calculate perplexity with better numerical stability."""
+    """Calculate perplexity for sparse labels."""
     preds = model.predict(X, verbose=0, batch_size=256)
-    # Convert one-hot back to indices for perplexity calculation
-    if len(y.shape) > 1 and y.shape[1] > 1:
-        y_indices = np.argmax(y, axis=1)
-        relevant_probs = preds[np.arange(len(preds)), y_indices]
-    else:
-        relevant_probs = preds[np.arange(len(preds)), y]
-    
-    # Clip probabilities to avoid log(0)
+    # y is integer class labels
+    relevant_probs = preds[np.arange(len(preds)), y.astype(int)]
     relevant_probs = np.clip(relevant_probs, 1e-8, 1.0)
     cross_entropy = -np.mean(np.log(relevant_probs))
     perplexity = np.exp(cross_entropy)
-    
     return perplexity
 
 def plot_training_history(history, save_path='training_history.png'):
@@ -457,7 +450,7 @@ def main():
     print("=" * 60)
     print("Enhanced Multi-Domain Next Word Prediction Training")
     print("=" * 60)
-    
+  
     # Setup
     ensure_data_directory()
     download_fallback_data()
@@ -481,35 +474,38 @@ def main():
     
     # Create sequences with UNK handling
     X, y = create_sequences_with_unk(tokens, unique_word_index, SEQ_LENGTH)
-    
+    X = X.astype("int32")
+    y = y.astype("int32")
     # Data augmentation
     X, y = augment_training_data(X, y, augment_ratio=0.1)
-    
-    # Convert to categorical
-    y = to_categorical(y, vocab_size)
-    
+    invalid_indices = np.where(y >= vocab_size)[0]
+    if len(invalid_indices) > 0:
+        print(f"Warning: Found {len(invalid_indices)} invalid labels, mapping them to <UNK>")
+    y[y >= vocab_size] = unique_word_index['<UNK>']
+    # Do NOT one-hot encode y, use sparse labels
+
     # Train/validation split
     X_train, X_val, y_train, y_val = train_test_split(
         X, y, test_size=0.1, random_state=42, shuffle=True
     )
-    
     print(f"\nTraining set: {len(X_train):,} sequences")
     print(f"Validation set: {len(X_val):,} sequences")
-    
+    print("Note: Using sparse labels to reduce memory usage.")
+
     # Load embeddings
     embedding_matrix = load_glove_embeddings(GLOVE_FILE, unique_word_index, EMBEDDING_DIM)
-    
+
     # Build model
     model = build_improved_model(vocab_size, EMBEDDING_DIM, SEQ_LENGTH, embedding_matrix)
-    
+
     # Compile with improved optimizer
     optimizer = Adam(learning_rate=LEARNING_RATE, clipnorm=1.0)
     model.compile(
-        loss='categorical_crossentropy', 
+        loss='sparse_categorical_crossentropy', 
         optimizer=optimizer, 
         metrics=['accuracy']
     )
-    
+
     # Prepare model info for saving
     model_info = {
         'index_to_word': index_to_word,
@@ -522,7 +518,7 @@ def main():
         'training_sequences': len(X_train),
         'validation_sequences': len(X_val)
     }
-    
+
     # Enhanced callbacks
     callbacks = [
         EarlyStopping(
@@ -546,11 +542,11 @@ def main():
             verbose=1
         )
     ]
-    
+
     print("\n" + "="*60)
     print("Starting Training...")
     print("="*60)
-    
+
     # Train model
     history = model.fit(
         X_train, y_train,
@@ -560,38 +556,35 @@ def main():
         callbacks=callbacks,
         verbose=1
     )
-    
+
     # Final evaluation
     print("\n" + "="*60)
     print("Training Complete - Final Evaluation")
     print("="*60)
-    
+
     try:
         # Calculate final perplexities
         train_perplexity = calculate_perplexity(model, X_train, y_train)
         val_perplexity = calculate_perplexity(model, X_val, y_val)
-        
         print(f"Final Training Perplexity: {train_perplexity:.2f}")
         print(f"Final Validation Perplexity: {val_perplexity:.2f}")
-        
         # Add to model info
         model_info['train_perplexity'] = train_perplexity
         model_info['val_perplexity'] = val_perplexity
-        
     except Exception as e:
         print(f"Error calculating perplexity: {e}")
-    
+
     # Save final model and info
     model.save('enhanced_next_word_model.h5')
     with open('model_info.pkl', 'wb') as f:
         pickle.dump(model_info, f)
-    
+
     # Plot training history
     try:
         plot_training_history(history)
     except Exception as e:
         print(f"Error plotting history: {e}")
-    
+
     print("\n" + "="*60)
     print("Training Summary")
     print("="*60)

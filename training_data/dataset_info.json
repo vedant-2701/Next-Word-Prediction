@@ -1,0 +1,16 @@
+{
+  "dataset_info": {
+    "name": "Multi-Domain Next Word Prediction Dataset",
+    "description": "Diverse training data for search engine-like behavior",
+    "domains": [
+      "News articles",
+      "Wikipedia-style encyclopedia content",
+      "Search queries and responses",
+      "Social media posts",
+      "Technical documentation",
+      "Literature (Project Gutenberg)"
+    ],
+    "purpose": "Train next word prediction model with broad domain knowledge",
+    "preprocessing": "Tokenized, lowercased, filtered for alphabetic words"
+  }
+}

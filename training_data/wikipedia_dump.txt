@@ -1,0 +1,10 @@
+Artificial intelligence is intelligence demonstrated by machines.
+    Machine learning is a subset of artificial intelligence.
+    Deep learning uses artificial neural networks with multiple layers.
+    Natural language processing enables computers to understand human language.
+    Computer vision allows machines to interpret and understand visual information.
+    Robotics combines mechanical engineering with artificial intelligence.
+    Data science involves extracting insights from large datasets.
+    Cloud computing provides on-demand access to computing resources.
+    Cybersecurity protects digital systems from malicious attacks.
+    Internet of things connects everyday objects to the internet.
